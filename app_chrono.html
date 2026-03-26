@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0e1a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Coach Séance · EPS BAC</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#0b0e1a;color:#e8eaf0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.screen:not(.active){display:none!important}
+
+/* ── LOGIN ── */
+#s-login{background:linear-gradient(150deg,#0b0e1a 0%,#0f1424 100%);overflow:hidden}
+.li-head{flex-shrink:0;padding:28px 20px 16px;text-align:center}
+.li-icon{font-size:48px;margin-bottom:4px}
+.li-badge{font-size:10px;letter-spacing:4px;color:#5a6177;text-transform:uppercase;margin-bottom:5px}
+.li-title{font-size:24px;font-weight:900;color:#f0f2f8;font-family:Georgia,serif;margin-bottom:2px}
+.li-sub{font-size:12px;color:#8892aa;margin-bottom:14px}
+.li-instruct{font-size:12px;color:#5a6177;text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:0 20px 8px;flex-shrink:0}
+.stu-scroll{flex:1;overflow-y:auto;padding:0 14px;-webkit-overflow-scrolling:touch}
+.stu-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:12px;margin-bottom:8px;cursor:pointer;border:1.5px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04);transition:all .1s;font-size:15px;color:#d0d5e8;font-weight:500;-webkit-tap-highlight-color:transparent}
+.stu-item:active{background:rgba(255,255,255,.12)}
+.stu-item.sel{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.5);color:#fff;font-weight:700}
+.stu-item.sel .stu-check{opacity:1}
+.stu-check{font-size:18px;opacity:0;transition:opacity .15s;color:#f59e0b}
+.li-foot{flex-shrink:0;padding:14px 14px 28px}
+.go-btn{width:100%;padding:16px;background:linear-gradient(135deg,#f59e0b,#f97316);border:none;border-radius:14px;color:#0b0e1a;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+.go-btn:disabled{background:rgba(255,255,255,.06);color:#3a4158;cursor:not-allowed}
+.go-btn:not(:disabled):active{opacity:.85}
+
+/* ── SESSIONS ── */
+#s-sessions{background:#0b0e1a}
+.top-bar{background:#1e1b4b;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.back-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#a8b0c8;border-radius:8px;padding:7px 13px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap}
+.stu-hdr{color:#fff;font-weight:700;font-size:14px}
+.vma-pill{background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:#fbbf24;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;margin-left:auto}
+.sec-ttl{padding:18px 18px 10px;font-size:11px;color:#5a6177;text-transform:uppercase;letter-spacing:1px;font-weight:700;flex-shrink:0}
+.ses-list{overflow-y:auto;flex:1;padding:0 14px 20px}
+.ses-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 18px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:14px}
+.ses-card:active{background:rgba(255,255,255,.08)}
+.ses-num{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0}
+.ses-body{flex:1}
+.ses-title{font-size:14px;font-weight:700;color:#f0f2f8;margin-bottom:3px}
+.ses-desc{font-size:12px;color:#8892aa;margin-bottom:6px}
+.ses-tags{display:flex;gap:6px;flex-wrap:wrap}
+.ses-tag{background:rgba(255,255,255,.06);border-radius:20px;padding:3px 9px;font-size:10px;color:#6d7795;font-weight:600}
+.ses-arr{color:#5a6177;font-size:20px}
+
+/* ── PREVIEW ── */
+#s-preview{background:#0b0e1a}
+.prev-content{flex:1;overflow-y:auto;padding:18px}
+.prev-banner{border-radius:14px;padding:18px;margin-bottom:14px}
+.prev-num{font-size:10px;text-transform:uppercase;letter-spacing:2px;opacity:.7;margin-bottom:3px}
+.prev-title{font-size:20px;font-weight:900;font-family:Georgia,serif;margin-bottom:3px}
+.prev-dur{font-size:12px;opacity:.7}
+.prev-sec{font-size:11px;font-weight:700;color:#5a6177;text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px}
+.prev-phase-row{display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:9px;margin-bottom:5px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.prev-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.prev-lbl{font-size:13px;color:#d0d5e8;flex:1}
+.prev-dur2{font-size:11px;color:#5a6177;font-weight:600}
+.start-btn{width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:18px}
+.start-btn:active{opacity:.9}
+
+/* ── ACTIVE ── */
+#s-active{transition:background .5s ease}
+.act-topbar{padding:10px 16px;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.3);flex-shrink:0;z-index:10}
+.act-back{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-family:inherit}
+.act-sesname{flex:1;font-size:12px;color:rgba(255,255,255,.65);text-align:center}
+.act-prog-lbl{font-size:11px;color:rgba(255,255,255,.45);white-space:nowrap}
+.prog-bar{height:3px;background:rgba(255,255,255,.12);flex-shrink:0}
+.prog-fill{height:100%;background:rgba(255,255,255,.55);transition:width .4s}
+.type-badge{text-align:center;padding:8px 0 2px;flex-shrink:0}
+.type-pill{display:inline-block;padding:5px 16px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9)}
+.act-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 20px;overflow:hidden}
+.ser-lbl{font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:2px}
+.phase-lbl{font-size:20px;font-weight:900;color:#fff;text-align:center;margin-bottom:10px}
+
+/* Timer ring */
+.ring-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.1)}
+.ring-arc{fill:none;stroke:rgba(255,255,255,.9);stroke-linecap:round;transition:stroke-dashoffset .6s linear,stroke .3s}
+.ring-txt{position:absolute;text-align:center;pointer-events:none}
+.t-val{font-size:48px;font-weight:900;color:#fff;line-height:1;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.t-sub{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+
+/* Plots */
+.plots-wrap{text-align:center;margin-bottom:6px}
+.plots-big{font-size:60px;font-weight:900;line-height:1}
+.plots-lbl{font-size:13px;color:rgba(255,255,255,.7);font-weight:600;margin-top:2px}
+.spd-lbl{font-size:13px;color:rgba(255,255,255,.55);text-align:center;margin-bottom:8px}
+.hint-box{background:rgba(0,0,0,.25);border-radius:12px;padding:11px 16px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.5;text-align:center;max-width:340px;margin:0 auto}
+
+/* Info phase */
+.info-icon{font-size:52px;text-align:center;margin-bottom:10px}
+.info-title{font-size:28px;font-weight:900;color:#fff;text-align:center;margin-bottom:8px;font-family:Georgia,serif}
+.info-desc{font-size:15px;color:rgba(255,255,255,.8);text-align:center;margin-bottom:14px;line-height:1.5}
+.ready-btn{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);color:#fff;border-radius:16px;padding:16px 40px;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit}
+.ready-btn:active{background:rgba(255,255,255,.3)}
+
+/* Done */
+.done-icon{font-size:64px;text-align:center;margin-bottom:10px}
+.done-title{font-size:30px;font-weight:900;color:#fff;text-align:center;margin-bottom:8px;font-family:Georgia,serif}
+.done-sub{font-size:15px;color:rgba(255,255,255,.8);text-align:center;margin-bottom:22px;line-height:1.5}
+.home-btn{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);color:#fff;border-radius:13px;padding:13px 34px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+
+/* Controls */
+.act-ctrl{flex-shrink:0;padding:10px 18px 22px;background:rgba(0,0,0,.3)}
+.next-prev{font-size:11px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:8px}
+.next-prev strong{color:rgba(255,255,255,.7)}
+.ctrl-row{display:flex;gap:10px}
+.btn-pause{flex:1;padding:13px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-pause:active{background:rgba(255,255,255,.2)}
+.btn-next{flex:1.5;padding:13px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-next:active{background:rgba(255,255,255,.28)}
+
+@keyframes flash{0%{opacity:.4}50%{opacity:1}100%{opacity:1}}
+.flash{animation:flash .25s ease}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="s-login" class="screen active">
+  <div class="li-head">
+    <div class="li-icon">🏃</div>
+    <div class="li-badge">EPS BAC · CA1 · Demi-fond</div>
+    <h1 class="li-title">Coach Séance</h1>
+    <p class="li-sub">Jeannine Manuel School · 2026</p>
+  </div>
+  <div class="li-instruct">Appuie sur ton nom</div>
+  <div class="stu-scroll" id="stu-list"></div>
+  <div class="li-foot">
+    <button id="go-btn" class="go-btn" disabled onclick="goSessions()">Choisir ma séance →</button>
+  </div>
+</div>
+
+<!-- SESSIONS -->
+<div id="s-sessions" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="show('login')">← Changer</button>
+    <span class="stu-hdr" id="hdr-name"></span>
+    <span class="vma-pill" id="hdr-vma"></span>
+  </div>
+  <div class="sec-ttl">Choisir la séance</div>
+  <div class="ses-list" id="ses-list"></div>
+</div>
+
+<!-- PREVIEW -->
+<div id="s-preview" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="show('sessions')">← Séances</button>
+    <span class="stu-hdr" id="prev-stu"></span>
+  </div>
+  <div class="prev-content" id="prev-content"></div>
+</div>
+
+<!-- ACTIVE -->
+<div id="s-active" class="screen">
+  <div class="act-topbar">
+    <button class="act-back" onclick="confirmExit()">✕</button>
+    <span class="act-sesname" id="act-name"></span>
+    <span class="act-prog-lbl" id="act-prog-lbl"></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <div class="type-badge"><span class="type-pill" id="type-pill">EFFORT</span></div>
+  <div class="act-main" id="act-main"></div>
+  <div class="act-ctrl" id="act-ctrl">
+    <div class="next-prev" id="next-prev"></div>
+    <div class="ctrl-row">
+      <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
+      <button class="btn-next" onclick="confirmSkip()">Suivant →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DONNÉES ÉLÈVES
+// ═══════════════════════════════════════════
+var CLASSE=[
+  {nom:"ABBOUD Farid",               sexe:"G",t500_1:"1'35",t500_2:"1'37",t250_1:"0'42",t250_2:"0'44",vmaVauss:17.0},
+  {nom:"ALONSO-GAUTRAIS Rafael",     sexe:"G",t500_1:"1'19",t500_2:"1'21",t250_1:"0'36",t250_2:"0'37",vmaVauss:18.0},
+  {nom:"BEURRIER DE CASTRO Marie",   sexe:"F",t500_1:"1'55",t500_2:"1'58",t250_1:"0'54",t250_2:"0'48",vmaVauss:15.5},
+  {nom:"BOU DOYLE Mateu",            sexe:"G",t500_1:"1'44",t500_2:"2'06",t250_1:"0'38",t250_2:"0'58",vmaVauss:16.0},
+  {nom:"BRIENS Chloe",               sexe:"F",t500_1:"2'05",t500_2:"2'30",t250_1:"1'00",t250_2:"1'10",vmaVauss:14.5},
+  {nom:"FARES Chloe",                sexe:"F",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:16.0},
+  {nom:"FOUCAUD Matisse",            sexe:"G",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:18.0},
+  {nom:"FREMY Carl",                 sexe:"G",t500_1:"1'38",t500_2:"1'42",t250_1:"0'45",t250_2:"0'45",vmaVauss:16.0},
+  {nom:"GALEA Chloe",                sexe:"F",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:null},
+  {nom:"GKLINAVOS TISSERAND Louise", sexe:"F",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:15.0},
+  {nom:"GUIRAUD Alexandre",          sexe:"G",t500_1:"1'27",t500_2:"1'25",t250_1:"0'39",t250_2:"0'39",vmaVauss:17.0},
+  {nom:"HAZIZA-SCHAEFER Lea",        sexe:"F",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:13.5},
+  {nom:"JANSON Milly",               sexe:"F",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:null},
+  {nom:"LEBLANC Telio",              sexe:"G",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:18.0},
+  {nom:"LECLERC Leonard",            sexe:"G",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:null},
+  {nom:"OLAVESEN Rhian",             sexe:"F",t500_1:"1'52",t500_2:"1'59",t250_1:"0'55",t250_2:"0'59",vmaVauss:null},
+  {nom:"ORBAN Oscar",                sexe:"G",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:null},
+  {nom:"ROSSET-ZUSHI Aki",           sexe:"G",t500_1:null,t500_2:null,t250_1:null,t250_2:null,vmaVauss:null},
+  {nom:"SALLE-KOBARI Issey",         sexe:"G",t500_1:"1'14",t500_2:"1'16",t250_1:"0'36",t250_2:"0'38",vmaVauss:null},
+  {nom:"VAUCHY Jeremy",              sexe:"G",t500_1:"1'22",t500_2:"1'19",t250_1:"0'38",t250_2:"0'37",vmaVauss:null},
+];
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function tSec(t){var p=String(t).replace(/"/g,'').split("'");return parseInt(p[0])*60+parseInt(p[1]);}
+function vKmh(d,s){return(d/s)*3.6;}
+function tCib(d,v){return Math.round(d/(v/3.6));}
+function durStr(s){s=Math.round(s);if(s<60)return s+'"';return Math.floor(s/60)+"'"+String(s%60).padStart(2,'0')+'"';}
+function fmt(s){s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+var FG=1.22,FF=1.15;
+function getVMA(el){
+  var f=el.sexe==='F'?FF:FG,def=el.sexe==='F'?13:14;
+  var hT=!!el.t500_1,hV=el.vmaVauss!=null;
+  if(hV){
+    var vV=el.vmaVauss;
+    if(hT){var sMin=Math.min(tSec(el.t500_1),tSec(el.t500_2)),vT=vKmh(500,sMin)/f,r=vV/vT;
+      if(r>=0.85&&r<=1.20)return Math.round((0.6*vV+0.4*vT)*10)/10;return vV;}
+    return vV;}
+  if(hT){var s=Math.min(tSec(el.t500_1),tSec(el.t500_2));return Math.round(vKmh(500,s)/f*10)/10;}
+  return def;
+}
+function calcAFL1(el){
+  if(!el.t500_1)return null;
+  var s1=tSec(el.t500_1),s2=tSec(el.t500_2),s3=tSec(el.t250_1),s4=tSec(el.t250_2);
+  return{ecC:Math.abs(s2-s1),ecD:Math.min(s1,s2)-(s3+s4)};
+}
+function getProfil(el){
+  var b=calcAFL1(el);
+  if(!b)return'regulier';
+  if(b.ecC>=9)return'decrochage';
+  if(b.ecD<=0)return'250_lent';
+  return'regulier';
+}
+
+// ═══════════════════════════════════════════
+// SÉANCES METADATA
+// ═══════════════════════════════════════════
+var SMETA={
+  2:{t:'Fractionné court 45"/45"',s:'110% VMA · 20 répétitions',d:'~1h15',f:'Puissance aérobie',c:'#f59e0b',i:'⚡'},
+  3:{t:'Capacité lactique',s:'3×450m + 1×500m',d:'~1h30',f:'Performance 500m',c:'#8b5cf6',i:'🎯'},
+  4:{t:'Blocs 500m',s:'Simulation fatigue BAC',d:'~1h30',f:'Régularité sous fatigue',c:'#06b6d4',i:'🔥'},
+  5:{t:'Simulation BAC',s:'2×500m + 2×250m officiels',d:'~1h30',f:'Répétition générale',c:'#f43f5e',i:'🏆'},
+};
+
+// ═══════════════════════════════════════════
+// PHASE BUILDER
+// ═══════════════════════════════════════════
+function ph(type,label,dur,o){return Object.assign({type:type,label:label,duration:dur||0},o||{});}
+
+function buildPhases(num,el){
+  var vma=getVMA(el),f=el.sexe==='F'?FF:FG;
+  var v5=el.t500_1?vKmh(500,Math.min(tSec(el.t500_1),tSec(el.t500_2))):vma*f;
+  var v2=el.t500_1?vKmh(250,Math.min(tSec(el.t250_1),tSec(el.t250_2))):vma*(f+0.08);
+  var vR=vma*0.65,vS=vma*1.10;
+  var p=getProfil(el);
+  var out=[];
+
+  if(num===2){
+    var pl=Math.round(vS/3.6*45/25),sp=Math.round(vS*10)/10;
+    out.push(ph('info','Série 1',0,{desc:'10 × 45" effort / 45" récup',hint:'Compter tes plots à chaque répétition et maintenir le même nombre du début à la fin.',col:'#f59e0b',bg:'linear-gradient(160deg,#1a0f00,#2a1800)'}));
+    for(var i=1;i<=10;i++){
+      out.push(ph('effort','Effort '+i+'/10',45,{plots:pl,plbl:'plots / 45"',spd:sp,hint:i<=3?'Partir à la bonne allure dès le départ.':i<=7?'Maintenir l\'allure — compter les plots.':'Tenir bon, les dernières reps sont les plus importantes !',col:'#f59e0b',bg:'linear-gradient(160deg,#1a0f00,#2a1800)',ser:'Série 1 · rep '+i+'/10'}));
+      out.push(ph('rest','Récup '+i+'/10',45,{desc:'Trot très lent',hint:'Souffler, rester en mouvement.',col:'#34d399',bg:'linear-gradient(160deg,#011a0d,#01250f)',ser:'Série 1 · récup '+i+'/10'}));
+    }
+    out.push(ph('recovery','Récupération inter-séries',360,{desc:'6 min footing très lent',hint:'Rester en mouvement — ces 6 min conditionnent la qualité de la série 2. Ne pas s\'asseoir.',col:'#06b6d4',bg:'linear-gradient(160deg,#001418,#001c22)',spd:Math.round(vR*10)/10}));
+    out.push(ph('info','Série 2',0,{desc:'10 × 45" effort / 45" récup',hint:'Même allure que la série 1. La série 2 semble plus difficile — c\'est normal.',col:'#ef4444',bg:'linear-gradient(160deg,#1a0000,#250000)'}));
+    for(var j=1;j<=10;j++){
+      out.push(ph('effort','Effort '+j+'/10',45,{plots:pl,plbl:'plots / 45"',spd:sp,hint:j<=3?'Même allure qu\'en série 1.':j<=7?'Tenir l\'allure, comparer avec série 1.':p==='decrochage'?'Comparer les plots S1 vs S2.':'Écart < 1 plot vs série 1 = excellence !',col:'#ef4444',bg:'linear-gradient(160deg,#1a0000,#250000)',ser:'Série 2 · rep '+j+'/10'}));
+      out.push(ph('rest','Récup '+j+'/10',45,{desc:'Trot très lent',hint:'Récupérer pour maintenir l\'allure.',col:'#34d399',bg:'linear-gradient(160deg,#011a0d,#01250f)',ser:'Série 2 · récup '+j+'/10'}));
+    }
+    out.push(ph('done','Séance terminée !',0,{desc:'20 répétitions accomplies !',hint:'Étirements légers, hydratation.',col:'#4ade80',bg:'linear-gradient(160deg,#011a0d,#042a10)'}));
+  }
+
+  else if(num===3){
+    out.push(ph('info','3 × 450m',0,{desc:'Récupération incomplète 1:1.5',hint:'Allure cible : ton allure 500m BAC. Départ contrôlé.',col:'#8b5cf6',bg:'linear-gradient(160deg,#0f0a1a,#16103a)'}));
+    var v450=[v5*0.97,v5*0.98,v5*0.99];
+    for(var k=0;k<3;k++){
+      var d450=tCib(450,v450[k]),rec=Math.round(d450*1.5)+(k===2?240:0);
+      out.push(ph('effort','450m #'+(k+1)+'/3',d450,{plots:18,plbl:'plots / 450m',spd:Math.round(v450[k]*10)/10,hint:k===0?'Départ contrôlé — allure 500m BAC.':k===1?'Même allure. Jambes lourdes — c\'est normal.':'Légère progression. 4min footing après la récup.',col:'#8b5cf6',bg:'linear-gradient(160deg,#0f0a1a,#16103a)',ser:'450m n'+(k+1)+' / 3'}));
+      out.push(ph('rest','Récup '+(k+1)+'/3',rec,{desc:k<2?'Marche/trot — récup incomplète':'Marche/trot + 4min footing lent',hint:k<2?'Récupération incomplète intentionnelle.':'Les 4min de footing préparent le 500m final.',col:'#8b5cf6',bg:'linear-gradient(160deg,#0a0a1a,#110d2a)',ser:'Récup '+(k+1)+'/3'}));
+    }
+    out.push(ph('info','1 × 500m — Distance BAC',0,{desc:'L\'effort clé de la séance',hint:'Allure exacte du BAC. Compter les plots pour valider.',col:'#f97316',bg:'linear-gradient(160deg,#1a0800,#2a1000)'}));
+    out.push(ph('effort','500m BAC',tCib(500,v5),{plots:20,plbl:'plots / 500m',spd:Math.round(v5*10)/10,hint:p==='decrochage'?'Départ aux plots indiqués — pas un de plus.':p==='250_lent'?'Finissez fort : les 100 derniers mètres à l\'allure des 250m.':'Finir plus fort que vous n\'avez commencé.',col:'#f97316',bg:'linear-gradient(160deg,#1a0800,#2a1000)'}));
+    out.push(ph('done','Séance terminée !',0,{desc:'3×450m + 1×500m accomplis !',hint:'Footing léger de récupération, étirements.',col:'#4ade80',bg:'linear-gradient(160deg,#011a0d,#042a10)'}));
+  }
+
+  else if(num===4){
+    var rb=p==='decrochage'?180:120;
+    out.push(ph('info','Bloc 1',0,{desc:'500m + récup + 500m',hint:'Critère : écart entre les 2×500m < '+(p==='decrochage'?'4':'3')+'s.',col:'#06b6d4',bg:'linear-gradient(160deg,#001418,#001c22)'}));
+    out.push(ph('effort','500m B1 #1',tCib(500,v5*0.97),{plots:20,plbl:'plots / 500m',spd:Math.round(v5*0.97*10)/10,hint:'Départ aux plots indiqués. Régularité = qualité du 2ème 500m.',col:'#06b6d4',bg:'linear-gradient(160deg,#001418,#001c22)'}));
+    out.push(ph('rest','Récup active',rb,{desc:(p==='decrochage'?'3':'2')+'min marche active',hint:'Marche active — ne pas s\'arrêter.',col:'#06b6d4',bg:'linear-gradient(160deg,#001010,#001818)'}));
+    out.push(ph('effort','500m B1 #2',tCib(500,v5*0.96),{plots:20,plbl:'plots / 500m',spd:Math.round(v5*0.96*10)/10,hint:'LE CŒUR de la séance : allure BAC avec du lactate accumulé. Situation exacte du BAC.',col:'#06b6d4',bg:'linear-gradient(160deg,#001418,#001c22)'}));
+    out.push(ph('recovery','Récup inter-blocs',480,{desc:'8 min footing très lent',hint:'Ces 8 minutes sont stratégiques. Récupération active > repos. Ne pas s\'asseoir.',col:'#34d399',bg:'linear-gradient(160deg,#011a0d,#01250f)',spd:Math.round(vR*10)/10}));
+    out.push(ph('info','Bloc 2',0,{desc:'500m + récup + 250m sprint',hint:p==='decrochage'?'250m final en liberté.':p==='250_lent'?'Ce 250m est VOTRE moment !':'250m doit être 6-7 km/h plus rapide que vos 500m.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('effort','500m B2 #1',tCib(500,v5*0.97),{plots:20,plbl:'plots / 500m',spd:Math.round(v5*0.97*10)/10,hint:'Reproduire exactement Bloc 1 #1.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('rest','Récup active',rb,{desc:(p==='decrochage'?'3':'2')+'min marche active',hint:'Se préparer mentalement pour le 250m sprint.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0008,#200010)'}));
+    out.push(ph('effort','250m SPRINT',tCib(250,v2*1.02),{plots:10,plbl:'plots / 250m',spd:Math.round(v2*1.02*10)/10,hint:'ACCÉLÉRATION. Simulation du 1er 250m BAC. Tout donner !',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('done','Séance terminée !',0,{desc:'Bloc 1 + Bloc 2 accomplis !',hint:'Footing léger, étirements.',col:'#4ade80',bg:'linear-gradient(160deg,#011a0d,#042a10)'}));
+  }
+
+  else if(num===5){
+    var v5s=p==='decrochage'?v5*1.03:v5*1.025;
+    var v2s1=p==='250_lent'?v2*1.05:v2*1.025;
+    var v2s2=p==='250_lent'?v2*1.06:v2*1.03;
+    out.push(ph('info','Activation',0,{desc:'3 × 150m progressifs',hint:'70% → 85% → 95%. Ne pas sauter — améliore la perf de 1.5-2%.',col:'#34d399',bg:'linear-gradient(160deg,#011a0d,#01250f)'}));
+    var aV=[v2*0.70,v2*0.85,v2*0.95],aPct=['70%','85%','95%'],aH=['Trot vif, mise en route progressive.','Hausse du rythme. Bras actifs.','Quasi-allure 250m BAC. Les jambes sont prêtes.'];
+    for(var a=0;a<3;a++){
+      out.push(ph('effort','150m #'+(a+1)+' — '+aPct[a],tCib(150,aV[a]),{plots:6,plbl:'plots / 150m',spd:Math.round(aV[a]*10)/10,hint:aH[a],col:'#34d399',bg:'linear-gradient(160deg,#011a0d,#01250f)'}));
+      out.push(ph('rest',a<2?'Marche 2min':'Repos 5min',a<2?120:300,{desc:a<2?'Marche récupération':'Repos assis — préparation mentale',hint:a<2?'Récupérer pour la prochaine accélération.':'Prendre le temps d\'annoncer ton projet de course.',col:'#34d399',bg:'linear-gradient(160deg,#011808,#011a0a)'}));
+    }
+    out.push(ph('info','Annonce du projet',0,{desc:'Critère AFL2 — dire à voix haute',hint:'"Mon ordre est [...], allure 500m = [X plots], allure 250m = [Y plots]."',col:'#a78bfa',bg:'linear-gradient(160deg,#0f0a1a,#16103a)'}));
+    out.push(ph('info','SIMULATION BAC',0,{desc:'2×500m + 2×250m — conditions exactes',hint:'Concentre-toi. Reproduire exactement les conditions du jour J.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('effort','500m #1',tCib(500,v5s),{plots:20,plbl:'plots / 500m',spd:Math.round(v5s*10)/10,hint:p==='decrochage'?'Départ contrôlé.':'Allure 2-3% au-dessus du test.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('recovery','Récupération 10min',600,{desc:'Footing 65% VMA',hint:'Récupération active. Rester en mouvement.',col:'#34d399',bg:'linear-gradient(160deg,#011a0d,#01250f)',spd:Math.round(vR*10)/10}));
+    out.push(ph('effort','500m #2',tCib(500,v5s),{plots:20,plbl:'plots / 500m',spd:Math.round(v5s*10)/10,hint:'Reproduire exactement le 500m #1 — c\'est la note B.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('recovery','Récupération 10min',600,{desc:'Footing 65% VMA',hint:'Dernière récupération avant les 250m.',col:'#34d399',bg:'linear-gradient(160deg,#011a0d,#01250f)',spd:Math.round(vR*10)/10}));
+    out.push(ph('effort','250m #1',tCib(250,v2s1),{plots:10,plbl:'plots / 250m',spd:Math.round(v2s1*10)/10,hint:p==='250_lent'?'VOTRE MOMENT. Battre le test.':'Allure nettement supérieure aux 500m.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('rest','Marche 2min',120,{desc:'Marche récupération',hint:'Dernier effort dans 2 minutes — tout donner !',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0008,#200010)'}));
+    out.push(ph('effort','250m #2 FINAL',tCib(250,v2s2),{plots:10,plbl:'plots / 250m',spd:Math.round(v2s2*10)/10,hint:'TOUT DONNER. L\'écart détermine la note C.',col:'#f43f5e',bg:'linear-gradient(160deg,#1a0010,#250018)'}));
+    out.push(ph('done','Simulation BAC terminée !',0,{desc:'Excellent travail !',hint:'Footing léger 5-10min, étirements complets.',col:'#4ade80',bg:'linear-gradient(160deg,#011a0d,#042a10)'}));
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════
+var actx=null;
+function getCtx(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
+function beep(freq,ms,vol){
+  try{var c=getCtx();if(c.state==='suspended')c.resume();
+    var o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.frequency.value=freq;g.gain.setValueAtTime(vol||0.35,c.currentTime);
+    o.start(c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+ms/1000);
+    o.stop(c.currentTime+ms/1000+0.05);
+  }catch(e){}
+}
+function sndStart(type){
+  if(type==='effort'){beep(880,70);setTimeout(()=>beep(880,70),110);setTimeout(()=>beep(1100,220),230);}
+  else if(type==='rest'){beep(660,70);setTimeout(()=>beep(660,280),110);}
+  else if(type==='recovery'){beep(440,140);setTimeout(()=>beep(550,140),190);}
+  else if(type==='done'){beep(660,90);setTimeout(()=>beep(880,90),160);setTimeout(()=>beep(1100,400),320);}
+}
+function sndTick(){beep(880,60,0.25);}
+
+// ═══════════════════════════════════════════
+// WAKE LOCK
+// ═══════════════════════════════════════════
+var wl=null;
+async function wake(){try{if('wakeLock'in navigator)wl=await navigator.wakeLock.request('screen');}catch(e){}}
+function unwake(){if(wl){wl.release();wl=null;}}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+var STU=null,SNUM=null,PHASES=[],CUR=0,TL=0,TT=0,TID=null,PAUSED=false;
+var CIRC=2*Math.PI*90;
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function show(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('s-'+id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════
+var SEL_IDX = -1;
+(function(){
+  var list=document.getElementById('stu-list');
+  CLASSE.forEach(function(e,i){
+    var d=document.createElement('div');
+    d.className='stu-item';
+    d.innerHTML='<span>'+e.nom+'</span><span class="stu-check">✓</span>';
+    d.addEventListener('touchstart',function(){},{passive:true});
+    d.onclick=function(){
+      document.querySelectorAll('.stu-item').forEach(function(x){x.classList.remove('sel');});
+      d.classList.add('sel');
+      SEL_IDX=i;
+      document.getElementById('go-btn').disabled=false;
+    };
+    list.appendChild(d);
+  });
+})();
+function goSessions(){
+  if(SEL_IDX<0)return;
+  STU=CLASSE[SEL_IDX];
+  document.getElementById('hdr-name').textContent=STU.nom;
+  document.getElementById('hdr-vma').textContent='VMA '+getVMA(STU)+' km/h';
+  renderSessions();
+  show('sessions');
+}
+
+// ═══════════════════════════════════════════
+// SESSIONS LIST
+// ═══════════════════════════════════════════
+function renderSessions(){
+  var el=document.getElementById('ses-list');el.innerHTML='';
+  [2,3,4,5].forEach(function(n){
+    var m=SMETA[n],d=document.createElement('div');d.className='ses-card';
+    d.innerHTML='<div class="ses-num" style="background:'+m.c+'22;color:'+m.c+'">'+n+'</div>'+
+      '<div class="ses-body"><div class="ses-title">'+m.t+'</div><div class="ses-desc">'+m.s+'</div>'+
+      '<div class="ses-tags"><span class="ses-tag">'+m.d+'</span><span class="ses-tag">'+m.f+'</span></div></div>'+
+      '<div class="ses-arr">›</div>';
+    d.onclick=function(){showPreview(n);};el.appendChild(d);
+  });
+}
+
+// ═══════════════════════════════════════════
+// PREVIEW
+// ═══════════════════════════════════════════
+function showPreview(n){
+  SNUM=n;var m=SMETA[n];
+  document.getElementById('prev-stu').textContent=STU.nom;
+  var phases=buildPhases(n,STU);
+  var typeCol={effort:'#f59e0b',rest:'#34d399',recovery:'#06b6d4',info:'#8b5cf6',done:'#4ade80'};
+  var rows='';
+  phases.forEach(function(p){
+    if(p.type==='done')return;
+    var dot=typeCol[p.type]||p.col||'#888';
+    var ds=p.duration?durStr(p.duration):'→';
+    var pl=p.plots?' · 🎯 '+p.plots+' plots':'';
+    rows+='<div class="prev-phase-row"><div class="prev-dot" style="background:'+dot+'"></div>'+
+      '<div class="prev-lbl">'+p.label+(p.ser?' <span style="font-size:10px;opacity:.6">('+p.ser+')</span>':'')+pl+'</div>'+
+      '<div class="prev-dur2">'+ds+'</div></div>';
+  });
+  var total=phases.filter(function(p){return p.type!=='info'&&p.type!=='done';}).reduce(function(a,p){return a+p.duration;},0);
+  document.getElementById('prev-content').innerHTML=
+    '<div class="prev-banner" style="background:'+m.c+'18;border:1px solid '+m.c+'35">'+
+    '<div class="prev-num">'+m.i+' Séance '+n+'</div>'+
+    '<div class="prev-title" style="color:'+m.c+'">'+m.t+'</div>'+
+    '<div class="prev-dur">'+m.d+' · '+m.s+'</div></div>'+
+    '<div class="prev-sec">Structure · '+Math.round(total/60)+' min de travail chronométré</div>'+
+    rows+
+    '<button class="start-btn" onclick="startSes()">▶ Démarrer la séance</button>';
+  show('preview');
+}
+
+// ═══════════════════════════════════════════
+// START SESSION
+// ═══════════════════════════════════════════
+function startSes(){
+  PHASES=buildPhases(SNUM,STU);CUR=0;PAUSED=false;
+  wake();
+  document.getElementById('act-name').textContent='Séance '+SNUM+' · '+STU.nom.split(' ')[0];
+  show('active');
+  runPhase(0);
+}
+
+// ═══════════════════════════════════════════
+// PHASE RENDERING
+// ═══════════════════════════════════════════
+function runPhase(idx){
+  if(idx>=PHASES.length)return;
+  CUR=idx;stopTimer();
+  var p=PHASES[idx];
+
+  // Background
+  document.getElementById('s-active').style.background=p.bg||'#0b0e1a';
+
+  // Progress bar (count timed phases)
+  var timed=PHASES.filter(function(x){return x.type!=='info'&&x.type!=='done';});
+  var done=PHASES.filter(function(x,i){return x.type!=='info'&&x.type!=='done'&&i<idx;});
+  var pct=timed.length?done.length/timed.length*100:0;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('act-prog-lbl').textContent=timed.length?(done.length+1)+'/'+timed.length:'';
+
+  // Type badge
+  var tL={effort:'EFFORT',rest:'RÉCUP',recovery:'RÉCUPÉRATION',info:'INFO',done:'TERMINÉ'};
+  var tB={effort:'rgba(249,115,22,.35)',rest:'rgba(52,211,153,.3)',recovery:'rgba(6,182,212,.3)',info:'rgba(139,92,246,.3)',done:'rgba(74,222,128,.35)'};
+  document.getElementById('type-pill').textContent=tL[p.type]||p.type;
+  document.getElementById('type-pill').style.background=tB[p.type]||'rgba(255,255,255,.15)';
+
+  var main=document.getElementById('act-main');
+  var ctrl=document.getElementById('act-ctrl');
+
+  if(p.type==='info'){
+    ctrl.style.display='none';stopTimer();
+    var ic=CUR===0?'🏃':p.label.includes('Annonce')?'🎙️':p.label.includes('SIMULATION')?'🏁':'💪';
+    main.innerHTML='<div class="info-icon">'+ic+'</div>'+
+      '<div class="info-title">'+p.label+'</div>'+
+      '<div class="info-desc">'+p.desc+'</div>'+
+      (p.hint?'<div class="hint-box">'+p.hint+'</div>':'')+
+      '<div style="margin-top:22px"><button class="ready-btn" onclick="nextPhase()">Prêt &nbsp;›</button></div>';
+  }
+  else if(p.type==='done'){
+    ctrl.style.display='none';stopTimer();unwake();sndStart('done');
+    main.innerHTML='<div class="done-icon">🎉</div>'+
+      '<div class="done-title">'+p.label+'</div>'+
+      '<div class="done-sub">'+p.desc+'</div>'+
+      (p.hint?'<div class="hint-box">'+p.hint+'</div>':'')+
+      '<div style="margin-top:22px"><button class="home-btn" onclick="exitSes()">← Retour à l\'accueil</button></div>';
+  }
+  else{
+    ctrl.style.display='';
+    // Next preview
+    var nx=PHASES[idx+1];
+    document.getElementById('next-prev').innerHTML=nx?'Prochain : <strong>'+nx.label+'</strong>'+(nx.duration?' · '+durStr(nx.duration):''):'';
+    renderTimed(p);
+    startTimer(p);
+    sndStart(p.type);
+  }
+}
+
+function renderTimed(p){
+  var main=document.getElementById('act-main');
+  var plotsH=p.plots?'<div class="plots-wrap"><div class="plots-big" style="color:'+p.col+';text-shadow:0 0 24px '+p.col+'66">'+p.plots+'</div><div class="plots-lbl">'+p.plbl+'</div></div>':'';
+  var spdH=p.spd?'<div class="spd-lbl">⚡ '+p.spd+' km/h</div>':(p.desc?'<div class="spd-lbl">'+p.desc+'</div>':'');
+  main.innerHTML=(p.ser?'<div class="ser-lbl">'+p.ser+'</div>':'')+
+    '<div class="phase-lbl">'+p.label+'</div>'+
+    '<div class="ring-wrap">'+
+      '<svg width="220" height="220" viewBox="0 0 220 220" style="transform:rotate(-90deg)">'+
+        '<circle class="ring-bg" cx="110" cy="110" r="90" stroke-width="12"/>'+
+        '<circle class="ring-arc" id="ring" cx="110" cy="110" r="90" stroke="'+p.col+'" stroke-width="12" stroke-dasharray="'+CIRC+'" stroke-dashoffset="0"/>'+
+      '</svg>'+
+      '<div class="ring-txt"><div class="t-val" id="tdisp">0:00</div><div class="t-sub">restant</div></div>'+
+    '</div>'+
+    plotsH+spdH+
+    (p.hint?'<div class="hint-box">'+p.hint+'</div>':'');
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+function startTimer(p){
+  TL=p.duration;TT=p.duration;PAUSED=false;
+  document.getElementById('btn-pause').textContent='⏸ Pause';
+  updDisp();updRing();
+  TID=setInterval(function(){
+    if(PAUSED)return;
+    TL--;updDisp();updRing();
+    if(TL<=5&&TL>0){sndTick();flash();}
+    if(TL<=0)nextPhase();
+  },1000);
+}
+function stopTimer(){if(TID){clearInterval(TID);TID=null;}}
+function updDisp(){var el=document.getElementById('tdisp');if(el)el.textContent=fmt(TL);}
+function updRing(){
+  var arc=document.getElementById('ring');if(!arc)return;
+  var offset=TT>0?(TL/TT)*CIRC:0;
+  arc.style.strokeDashoffset=String(CIRC-offset);
+  if(TL<=5&&TL>0)arc.style.stroke='#ff4444';
+  else arc.style.stroke=PHASES[CUR]?PHASES[CUR].col:'#fff';
+}
+function flash(){var el=document.getElementById('tdisp');if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
+function togglePause(){
+  PAUSED=!PAUSED;
+  document.getElementById('btn-pause').textContent=PAUSED?'▶ Reprendre':'⏸ Pause';
+  if(!PAUSED&&actx&&actx.state==='suspended')actx.resume();
+}
+function nextPhase(){stopTimer();if(CUR+1<PHASES.length)runPhase(CUR+1);}
+function confirmSkip(){
+  var p=PHASES[CUR];
+  if(p.type==='info'||p.type==='done'){nextPhase();return;}
+  if(TL>5&&!confirm('Passer à la phase suivante ?'))return;
+  nextPhase();
+}
+function confirmExit(){if(confirm('Quitter la séance en cours ?'))exitSes();}
+function exitSes(){stopTimer();unwake();show('sessions');}
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>

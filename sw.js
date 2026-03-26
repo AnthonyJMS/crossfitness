@@ -1,12 +1,16 @@
-const CACHE_NAME = 'crossfitness-v1';
+const CACHE_NAME = 'crossfitness-v2';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './app_chrono.html',
   './css/app.css',
   './js/data.js',
   './js/app.js',
-  './manifest.json'
+  './manifest.json',
+  './icons/icon-180.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 // Cache static assets on install
