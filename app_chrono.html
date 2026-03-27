@@ -121,6 +121,45 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
 
 @keyframes flash{0%{opacity:.4}50%{opacity:1}100%{opacity:1}}
 .flash{animation:flash .25s ease}
+
+/* ── OBJECTIF (effort stopwatch) ── */
+.target-row{text-align:center;margin-bottom:8px;font-size:14px;color:rgba(255,255,255,.55);font-weight:600}
+.target-row strong{color:#fff;font-size:17px;margin-left:4px}
+
+/* ── TABLEAU D'OBJECTIFS (info phase) ── */
+.info-targets{background:rgba(0,0,0,.22);border-radius:13px;padding:11px 15px;margin:10px auto 14px;width:100%;max-width:360px;text-align:left}
+.info-tgt-ttl{font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:9px;font-weight:700}
+.info-tgt-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.info-tgt-row:last-child{border-bottom:none}
+.info-tgt-lbl{font-size:13px;color:rgba(255,255,255,.7)}
+.info-tgt-right{display:flex;align-items:center;gap:7px}
+.info-tgt-time{font-size:14px;font-weight:900;color:#f59e0b}
+.info-tgt-plots{font-size:10px;color:rgba(255,255,255,.3)}
+
+/* ── BOUTON STOP ── */
+.btn-stop{flex:1.5;padding:13px;background:rgba(239,68,68,.18);border:1.5px solid rgba(239,68,68,.45);color:#ff7070;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.btn-stop:active{background:rgba(239,68,68,.32)}
+
+/* ── ÉCRAN BILAN ── */
+#s-recap{background:#0b0e1a}
+.recap-scroll{flex:1;overflow-y:auto;padding:14px 14px 30px;-webkit-overflow-scrolling:touch}
+.recap-hero{text-align:center;padding:18px 0 16px}
+.recap-icon{font-size:50px;margin-bottom:6px}
+.recap-title{font-size:22px;font-weight:900;color:#f0f2f8;font-family:Georgia,serif;margin-bottom:3px}
+.recap-sub{font-size:12px;color:#5a6177;margin-bottom:20px}
+.recap-sec{font-size:10px;font-weight:700;color:#5a6177;text-transform:uppercase;letter-spacing:1px;margin:12px 0 8px}
+.recap-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.recap-num{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+.recap-info{flex:1;min-width:0}
+.recap-lbl{font-size:13px;color:#c0c8dc;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recap-target{font-size:11px;color:#4a5168}
+.recap-actual{font-size:20px;font-weight:900;color:#fff;line-height:1.1;font-variant-numeric:tabular-nums}
+.recap-badge{font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px;white-space:nowrap;margin-top:3px;display:inline-block}
+.badge-ok{background:rgba(74,222,128,.15);color:#4ade80}
+.badge-slow{background:rgba(248,113,113,.15);color:#f87171}
+.badge-na{background:rgba(255,255,255,.07);color:#6b7280}
+.recap-home-btn{width:100%;padding:15px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:13px;color:#d0d5e8;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+.recap-home-btn:active{background:rgba(255,255,255,.13)}
 </style>
 </head>
 <body>
@@ -160,6 +199,15 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
   <div class="prev-content" id="prev-content"></div>
 </div>
 
+<!-- RECAP -->
+<div id="s-recap" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="exitSes()">← Accueil</button>
+    <span class="stu-hdr" id="recap-stu"></span>
+  </div>
+  <div class="recap-scroll" id="recap-content"></div>
+</div>
+
 <!-- ACTIVE -->
 <div id="s-active" class="screen">
   <div class="act-topbar">
@@ -174,7 +222,7 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
     <div class="next-prev" id="next-prev"></div>
     <div class="ctrl-row">
       <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
-      <button class="btn-next" onclick="confirmSkip()">Suivant →</button>
+      <button class="btn-next" id="btn-next" onclick="confirmSkip()">Suivant →</button>
     </div>
   </div>
 </div>
@@ -253,7 +301,11 @@ var SMETA={
 // ═══════════════════════════════════════════
 // PHASE BUILDER
 // ═══════════════════════════════════════════
-function ph(type,label,dur,o){return Object.assign({type:type,label:label,duration:dur||0},o||{});}
+function ph(type,label,dur,o){
+  var base=Object.assign({type:type,label:label,duration:dur||0},o||{});
+  if(type==='effort')base.isStopwatch=true;
+  return base;
+}
 
 function buildPhases(num,el){
   var vma=getVMA(el),f=el.sexe==='F'?FF:FG;
@@ -364,6 +416,7 @@ function unwake(){if(wl){wl.release();wl=null;}}
 // STATE
 // ═══════════════════════════════════════════
 var STU=null,SNUM=null,PHASES=[],CUR=0,TL=0,TT=0,TID=null,PAUSED=false;
+var TE=0,STOPWATCH=false,RESULTS=[];
 var CIRC=2*Math.PI*90;
 
 // ═══════════════════════════════════════════
@@ -452,7 +505,7 @@ function showPreview(n){
 // START SESSION
 // ═══════════════════════════════════════════
 function startSes(){
-  PHASES=buildPhases(SNUM,STU);CUR=0;PAUSED=false;
+  PHASES=buildPhases(SNUM,STU);CUR=0;PAUSED=false;RESULTS=[];
   wake();
   document.getElementById('act-name').textContent='Séance '+SNUM+' · '+STU.nom.split(' ')[0];
   show('active');
@@ -488,10 +541,36 @@ function runPhase(idx){
 
   if(p.type==='info'){
     ctrl.style.display='none';stopTimer();
+    // Collecter les phases suivantes jusqu'à la prochaine info/done
+    var nxt=[];
+    for(var ni=CUR+1;ni<PHASES.length&&PHASES[ni].type!=='info'&&PHASES[ni].type!=='done';ni++)nxt.push(PHASES[ni]);
+    var efforts=nxt.filter(function(x){return x.type==='effort';});
+    var rests=nxt.filter(function(x){return x.type==='rest'||x.type==='recovery';});
+    var tgtH='';
+    if(efforts.length){
+      var rows=[];
+      var allSame=efforts.length>1&&efforts.every(function(e){return e.duration===efforts[0].duration&&e.plots===efforts[0].plots;});
+      if(allSame){
+        rows.push({lbl:efforts.length+' × effort',time:durStr(efforts[0].duration),plots:efforts[0].plots?efforts[0].plots+' plots':'',eff:true});
+      } else {
+        efforts.forEach(function(e){rows.push({lbl:e.label,time:durStr(e.duration),plots:e.plots?e.plots+' plots':'',eff:true});});
+      }
+      if(rests.length&&rests[0].duration){
+        var rLbl=rests.length>1?'Récup (entre chaque)':rests[0].label;
+        rows.push({lbl:rLbl,time:durStr(rests[0].duration),plots:'',eff:false});
+      }
+      tgtH='<div class="info-targets"><div class="info-tgt-ttl">Tes objectifs</div>';
+      rows.forEach(function(r){
+        tgtH+='<div class="info-tgt-row"><span class="info-tgt-lbl">'+(r.eff?'🏃 ':'⏸ ')+r.lbl+'</span>'+
+          '<span class="info-tgt-right"><span class="info-tgt-time">'+r.time+'</span>'+(r.plots?'<span class="info-tgt-plots">'+r.plots+'</span>':'')+'</span></div>';
+      });
+      tgtH+='</div>';
+    }
     var ic=CUR===0?'🏃':p.label.includes('Annonce')?'🎙️':p.label.includes('SIMULATION')?'🏁':'💪';
     main.innerHTML='<div class="info-icon">'+ic+'</div>'+
       '<div class="info-title">'+p.label+'</div>'+
       '<div class="info-desc">'+p.desc+'</div>'+
+      tgtH+
       (p.hint?'<div class="hint-box">'+p.hint+'</div>':'')+
       '<div style="margin-top:22px"><button class="ready-btn" onclick="nextPhase()">Prêt &nbsp;›</button></div>';
   }
@@ -501,13 +580,22 @@ function runPhase(idx){
       '<div class="done-title">'+p.label+'</div>'+
       '<div class="done-sub">'+p.desc+'</div>'+
       (p.hint?'<div class="hint-box">'+p.hint+'</div>':'')+
-      '<div style="margin-top:22px"><button class="home-btn" onclick="exitSes()">← Retour à l\'accueil</button></div>';
+      '<div style="margin-top:22px;display:flex;flex-direction:column;gap:12px;align-items:center">'+
+      (RESULTS.length?'<button class="ready-btn" onclick="showRecap()">📊 Voir mon bilan →</button>':'')+
+      '<button class="home-btn" onclick="exitSes()">← Retour à l\'accueil</button>'+
+      '</div>';
   }
   else{
     ctrl.style.display='';
-    // Next preview
     var nx=PHASES[idx+1];
     document.getElementById('next-prev').innerHTML=nx?'Prochain : <strong>'+nx.label+'</strong>'+(nx.duration?' · '+durStr(nx.duration):''):'';
+    // Bouton selon mode
+    var nb=document.getElementById('btn-next');
+    if(p.isStopwatch){
+      nb.className='btn-stop';nb.textContent='⏹ Arrêter';nb.onclick=stopEffort;
+    } else {
+      nb.className='btn-next';nb.textContent='Suivant →';nb.onclick=confirmSkip;
+    }
     renderTimed(p);
     startTimer(p);
     sndStart(p.type);
@@ -516,6 +604,10 @@ function runPhase(idx){
 
 function renderTimed(p){
   var main=document.getElementById('act-main');
+  var isSW=!!p.isStopwatch;
+  var initOff=isSW?CIRC:0; // vide au départ pour chrono montant
+  var subTxt=isSW?'ÉCOULÉ':'RESTANT';
+  var targetH=isSW&&p.duration?'<div class="target-row">🎯 Objectif :<strong>'+durStr(p.duration)+'</strong></div>':'';
   var plotsH=p.plots?'<div class="plots-wrap"><div class="plots-big" style="color:'+p.col+';text-shadow:0 0 24px '+p.col+'66">'+p.plots+'</div><div class="plots-lbl">'+p.plbl+'</div></div>':'';
   var spdH=p.spd?'<div class="spd-lbl">⚡ '+p.spd+' km/h</div>':(p.desc?'<div class="spd-lbl">'+p.desc+'</div>':'');
   main.innerHTML=(p.ser?'<div class="ser-lbl">'+p.ser+'</div>':'')+
@@ -523,11 +615,11 @@ function renderTimed(p){
     '<div class="ring-wrap">'+
       '<svg width="220" height="220" viewBox="0 0 220 220" style="transform:rotate(-90deg)">'+
         '<circle class="ring-bg" cx="110" cy="110" r="90" stroke-width="12"/>'+
-        '<circle class="ring-arc" id="ring" cx="110" cy="110" r="90" stroke="'+p.col+'" stroke-width="12" stroke-dasharray="'+CIRC+'" stroke-dashoffset="0"/>'+
+        '<circle class="ring-arc" id="ring" cx="110" cy="110" r="90" stroke="'+p.col+'" stroke-width="12" stroke-dasharray="'+CIRC+'" stroke-dashoffset="'+initOff+'"/>'+
       '</svg>'+
-      '<div class="ring-txt"><div class="t-val" id="tdisp">0:00</div><div class="t-sub">restant</div></div>'+
+      '<div class="ring-txt"><div class="t-val" id="tdisp">0:00</div><div class="t-sub">'+subTxt+'</div></div>'+
     '</div>'+
-    plotsH+spdH+
+    targetH+plotsH+spdH+
     (p.hint?'<div class="hint-box">'+p.hint+'</div>':'');
 }
 
@@ -535,24 +627,35 @@ function renderTimed(p){
 // TIMER
 // ═══════════════════════════════════════════
 function startTimer(p){
-  TL=p.duration;TT=p.duration;PAUSED=false;
+  TL=p.duration;TT=p.duration;TE=0;STOPWATCH=!!p.isStopwatch;PAUSED=false;
   document.getElementById('btn-pause').textContent='⏸ Pause';
   updDisp();updRing();
   TID=setInterval(function(){
     if(PAUSED)return;
-    TL--;updDisp();updRing();
-    if(TL<=5&&TL>0){sndTick();flash();}
-    if(TL<=0)nextPhase();
+    if(STOPWATCH){
+      TE++;updDisp();updRing();
+      if(TT>0&&TE===TT){sndStart('rest');flash();} // signal : objectif atteint
+    } else {
+      TL--;updDisp();updRing();
+      if(TL<=5&&TL>0){sndTick();flash();}
+      if(TL<=0)nextPhase();
+    }
   },1000);
 }
 function stopTimer(){if(TID){clearInterval(TID);TID=null;}}
-function updDisp(){var el=document.getElementById('tdisp');if(el)el.textContent=fmt(TL);}
+function updDisp(){var el=document.getElementById('tdisp');if(el)el.textContent=STOPWATCH?fmt(TE):fmt(TL);}
 function updRing(){
   var arc=document.getElementById('ring');if(!arc)return;
-  var offset=TT>0?(TL/TT)*CIRC:0;
-  arc.style.strokeDashoffset=String(CIRC-offset);
-  if(TL<=5&&TL>0)arc.style.stroke='#ff4444';
-  else arc.style.stroke=PHASES[CUR]?PHASES[CUR].col:'#fff';
+  if(STOPWATCH){
+    var ratio=TT>0?Math.min(TE/TT,1):0;
+    arc.style.strokeDashoffset=String(CIRC*(1-ratio));
+    arc.style.stroke=(TE>=TT&&TT>0)?'#4ade80':(PHASES[CUR]?PHASES[CUR].col:'#fff');
+  } else {
+    var offset=TT>0?(TL/TT)*CIRC:0;
+    arc.style.strokeDashoffset=String(CIRC-offset);
+    if(TL<=5&&TL>0)arc.style.stroke='#ff4444';
+    else arc.style.stroke=PHASES[CUR]?PHASES[CUR].col:'#fff';
+  }
 }
 function flash(){var el=document.getElementById('tdisp');if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
 function togglePause(){
@@ -567,6 +670,48 @@ function confirmSkip(){
   if(TL>5&&!confirm('Passer à la phase suivante ?'))return;
   nextPhase();
 }
+function stopEffort(){
+  var actual=TE;stopTimer();
+  var p=PHASES[CUR];
+  RESULTS.push({label:p.ser||p.label,target:p.duration,actual:actual,col:p.col||'#fff'});
+  nextPhase();
+}
+
+function showRecap(){
+  document.getElementById('recap-stu').textContent=STU.nom.split(' ')[0]+' · Séance '+SNUM;
+  var html='<div class="recap-hero"><div class="recap-icon">📊</div>'+
+    '<div class="recap-title">Bilan de séance</div>'+
+    '<div class="recap-sub">Séance '+SNUM+' · '+STU.nom+'</div></div>'+
+    '<div class="recap-sec">Efforts réalisés — '+RESULTS.length+' course'+(RESULTS.length>1?'s':'')+'</div>';
+  RESULTS.forEach(function(r,i){
+    var actualStr=fmt(r.actual);
+    var targetStr=r.target?durStr(r.target):'—';
+    var badge='<span class="recap-badge badge-na">—</span>';
+    if(r.target){
+      var delta=r.actual-r.target;
+      var abs=Math.abs(delta);
+      var sign=delta<=0?'':'+';
+      badge=delta<=2?
+        '<span class="recap-badge badge-ok">'+(delta<=0?sign+durStr(abs).replace(/^0'/,''):'+'+durStr(abs))+'</span>':
+        '<span class="recap-badge badge-slow">+'+durStr(abs)+'</span>';
+      if(delta<0)badge='<span class="recap-badge badge-ok">-'+durStr(abs)+'</span>';
+    }
+    html+='<div class="recap-row">'+
+      '<div class="recap-num" style="background:'+(r.col)+'33;color:'+r.col+'">'+(i+1)+'</div>'+
+      '<div class="recap-info">'+
+        '<div class="recap-lbl">'+r.label+'</div>'+
+        '<div class="recap-target">Objectif : '+targetStr+'</div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+        '<div class="recap-actual">'+actualStr+'</div>'+
+        badge+
+      '</div></div>';
+  });
+  html+='<button class="recap-home-btn" onclick="exitSes()">← Retour à l\'accueil</button>';
+  document.getElementById('recap-content').innerHTML=html;
+  show('recap');
+}
+
 function confirmExit(){if(confirm('Quitter la séance en cours ?'))exitSes();}
 function exitSes(){stopTimer();unwake();show('sessions');}
 </script>
