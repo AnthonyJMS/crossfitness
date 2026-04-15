@@ -139,6 +139,10 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
 /* ── BOUTON STOP ── */
 .btn-stop{flex:1.5;padding:13px;background:rgba(239,68,68,.18);border:1.5px solid rgba(239,68,68,.45);color:#ff7070;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
 .btn-stop:active{background:rgba(239,68,68,.32)}
+/* ── BOUTON RETOUR PHASE ── */
+.btn-back{width:48px;padding:13px 0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#6d7795;border-radius:12px;font-size:17px;cursor:pointer;font-family:inherit;flex-shrink:0;transition:opacity .15s}
+.btn-back:active{background:rgba(255,255,255,.13);color:#c0c8dc}
+.btn-back:disabled{opacity:.2;cursor:not-allowed}
 
 /* ── ÉCRAN BILAN ── */
 #s-recap{background:#0b0e1a}
@@ -252,6 +256,7 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
   <div class="act-ctrl" id="act-ctrl">
     <div class="next-prev" id="next-prev"></div>
     <div class="ctrl-row">
+      <button class="btn-back" id="btn-back" onclick="goBackPhase()" disabled>←</button>
       <button class="btn-pause" id="btn-pause" onclick="togglePause()">⏸ Pause</button>
       <button class="btn-next" id="btn-next" onclick="confirmSkip()">Suivant →</button>
     </div>
@@ -549,6 +554,8 @@ function startSes(){
 function runPhase(idx){
   if(idx>=PHASES.length)return;
   CUR=idx;stopTimer();
+  var bb=document.getElementById('btn-back');
+  if(bb){bb.disabled=(idx===0);}
   var p=PHASES[idx];
 
   // Background
@@ -700,6 +707,18 @@ function confirmSkip(){
   if(p.type==='info'||p.type==='done'){nextPhase();return;}
   if(TL>5&&!confirm('Passer à la phase suivante ?'))return;
   nextPhase();
+}
+function goBackPhase(){
+  if(CUR<=0)return;
+  var prev=PHASES[CUR-1];
+  var lastR=RESULTS[RESULTS.length-1];
+  var willErase=prev&&prev.isStopwatch&&lastR&&(lastR.label===(prev.ser||prev.label));
+  if(willErase){
+    if(!confirm('Revenir en arrière effacera le temps enregistré pour cette course. Confirmer ?'))return;
+    RESULTS.pop();
+  }
+  stopTimer();
+  runPhase(CUR-1);
 }
 function stopEffort(){
   if(!confirm('Arrêter le chrono et enregistrer ce temps ?'))return;

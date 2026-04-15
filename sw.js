@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crossfitness-v4';
+const CACHE_NAME = 'crossfitness-v5';
 
 const STATIC_ASSETS = [
   './',
